@@ -1,0 +1,304 @@
+{
+  "name": "Tugas 4 - Otomatisasi Jadwal Postingan",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a4ec886f-3e26-40ed-88d7-ef185b41c2a9",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "19N0KTygkZECJJqChhavw5ZGiPAoV2I3l37YjJNqz0m4",
+          "mode": "list",
+          "cachedResultName": "Tugas 4 - Otomatisasi Jadwal Postingan",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19N0KTygkZECJJqChhavw5ZGiPAoV2I3l37YjJNqz0m4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19N0KTygkZECJJqChhavw5ZGiPAoV2I3l37YjJNqz0m4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "3ee0767e-52b4-407a-81b2-981aadc597c9",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SMQsYNUGioIRdeDQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst now = new Date(\n  new Date().toLocaleString('en-US', {\n    timeZone: 'Asia/Jakarta'\n  })\n);\n\nreturn items.filter(item => {\n  const data = item.json;\n\n  if (data.Status !== 'Pending') return false;\n\n  const dateParts = String(data['Scheduled Date']).split('/');\n  const timeParts = String(data['Scheduled Time']).split(':');\n\n  if (dateParts.length !== 3 || timeParts.length < 2) {\n    return false;\n  }\n\n  const day = Number(dateParts[0]);\n  const month = Number(dateParts[1]) - 1;\n  const year = Number(dateParts[2]);\n  const hour = Number(timeParts[0]);\n  const minute = Number(timeParts[1]);\n  const second = Number(timeParts[2] || 0);\n\n  const scheduled = new Date(year, month, day, hour, minute, second);\n\n  return !isNaN(scheduled.getTime()) && scheduled <= now;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "20e1350d-d5f2-432a-9f0c-019871a76123",
+      "name": "Filter Ready Posts"
+    },
+    {
+      "parameters": {
+        "chatId": "6198150300",
+        "text": "={{ $json.Content }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "4a794ffc-9ec2-4477-b123-296b0bcdaa56",
+      "name": "Send a text message",
+      "webhookId": "c5a0afaa-99a9-4c48-bc72-0d06fd2dcbfc",
+      "credentials": {
+        "telegramApi": {
+          "id": "fK1O7sFACxtqsFd8",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a9e949c6-6244-4ecc-a8b3-2c654105342a",
+              "name": "Status",
+              "value": "Published",
+              "type": "string"
+            },
+            {
+              "id": "aae83134-ca37-4405-97a5-1aa36a39c1e6",
+              "name": "",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "8c842221-4ab3-4941-9806-a2136298d953",
+              "name": "row_number",
+              "value": "={{ $('Filter Ready Posts').item.json.row_number }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        896,
+        0
+      ],
+      "id": "d97ec17d-6ddf-4bec-b353-2be579a84326",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "19N0KTygkZECJJqChhavw5ZGiPAoV2I3l37YjJNqz0m4",
+          "mode": "list",
+          "cachedResultName": "Tugas 4 - Otomatisasi Jadwal Postingan",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19N0KTygkZECJJqChhavw5ZGiPAoV2I3l37YjJNqz0m4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19N0KTygkZECJJqChhavw5ZGiPAoV2I3l37YjJNqz0m4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{ $('Filter Ready Posts').item.json.ID }}",
+            "Status": "Published"
+          },
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Content",
+              "displayName": "Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Scheduled Date",
+              "displayName": "Scheduled Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Scheduled Time",
+              "displayName": "Scheduled Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "06717a7d-b182-4b4b-8490-cadd8d00c927",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SMQsYNUGioIRdeDQ",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Filter Ready Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Ready Posts": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "70a8edc7-c736-4aeb-84f1-3a9055b7f88d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dc96f10ae7dc95d3c138575ba243a0a167923dbcb524841d451aadf9135d5fb3"
+  },
+  "nodeGroups": [],
+  "id": "6Hc51d51DdcyRn7w",
+  "tags": []
+}

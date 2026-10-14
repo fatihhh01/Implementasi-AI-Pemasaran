@@ -1,0 +1,488 @@
+{
+  "name": "Tugas 5 - Competitor Monitoring",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -192,
+        48
+      ],
+      "id": "324ee6fd-4b0e-479d-a624-ff2719502b1f",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "60c5c18beec5a5f1a3bf29d8de6304d75f081565"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"q\": \"NF Academy berita terbaru\",\n  \"num\": 10\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        48,
+        -64
+      ],
+      "id": "895c6f7b-68bb-4288-9b9b-1d0f2ba03f7d",
+      "name": "NFA"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "60c5c18beec5a5f1a3bf29d8de6304d75f081565"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"q\": \"BISA AI berita terbaru\",\n  \"num\": 10\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        48,
+        96
+      ],
+      "id": "7c32676d-f1c0-4e46-ac74-e1d6a2b8a7f2",
+      "name": "BISA AI"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "60c5c18beec5a5f1a3bf29d8de6304d75f081565"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"q\": \"Vinix 7 berita terbaru\",\n  \"num\": 10\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        48,
+        288
+      ],
+      "id": "778d940b-230d-4916-8ae5-706821d7b19f",
+      "name": "VINIX 7"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst getOrganicData = (nodeName) => {\n  try {\n    const results = $(nodeName).all();\n    return results[0].json.organic || [];\n  } catch (e) {\n    return [];\n  }\n};\n\nconst nfaResults = getOrganicData('NFA');\nconst bisaResults = getOrganicData('BISA AI');\nconst vinixResults = getOrganicData('VINIX 7');\n\nconst currentTime = DateTime.now().toFormat('yyyy-MM-dd HH:mm');\n\nconst finalData = [\n  ...nfaResults.map(i => ({\n    json: {\n      ...i,\n      brand: 'NF Academy',\n      processedAt: currentTime\n    }\n  })),\n  ...bisaResults.map(i => ({\n    json: {\n      ...i,\n      brand: 'BISA AI',\n      processedAt: currentTime\n    }\n  })),\n  ...vinixResults.map(i => ({\n    json: {\n      ...i,\n      brand: 'Vinix 7',\n      processedAt: currentTime\n    }\n  }))\n];\n\nreturn finalData;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        80
+      ],
+      "id": "dad8e3de-cd3b-4e40-a257-8aee4143b2f7",
+      "name": "gabungkan data"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst allItems = $input.all();\nconst total = allItems.length;\n\nconst counts = {\n  nfa: allItems.filter(i => i.json.brand === \"NF Academy\").length,\n  bisa: allItems.filter(i => i.json.brand === \"BISA AI\").length,\n  vinix: allItems.filter(i => i.json.brand === \"Vinix 7\").length\n};\n\nconst sov = {\n  nfa: total > 0 ? ((counts.nfa / total) * 100).toFixed(1) : 0,\n  bisa: total > 0 ? ((counts.bisa / total) * 100).toFixed(1) : 0,\n  vinix: total > 0 ? ((counts.vinix / total) * 100).toFixed(1) : 0\n};\n\nlet combinedText = \"\";\n\nallItems.forEach(item => {\n  combinedText += `[${item.json.brand}] ${item.json.title}: ${item.json.snippet}\\n\\n`;\n});\n\nreturn {\n  metrics: {\n    processedAt: DateTime.now().toFormat('yyyy-MM-dd HH:mm'),\n    total_mentions: total,\n    breakdown: counts,\n    share_of_voice: sov,\n    dashboard_url: \"https://docs.google.com/spreadsheets/d/19yDBpx981bYwOzIKD7oxHG80YdfDqY_ZUmVyCIYbXNU/edit\"\n  },\n  text_for_ai: combinedText\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        80
+      ],
+      "id": "7d1b7ffa-47de-41d0-a61b-01bc85f65831",
+      "name": "Menyiapkan Teks AI"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        688,
+        288
+      ],
+      "id": "0d5a6d20-24fa-45e2-9d7c-4d94f05fafea",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "RaiKW7ruUAk4UoXe",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analisis data kompetitor berikut menggunakan bahasa Indonesia yang mudah dipahami.\n\nDATA METRICS:\nTotal Mentions: {{ $json.metrics.total_mentions }}\n\nNF Academy: {{ $json.metrics.breakdown.nfa }} mention, SoV {{ $json.metrics.share_of_voice.nfa }}%\nBISA AI: {{ $json.metrics.breakdown.bisa }} mention, SoV {{ $json.metrics.share_of_voice.bisa }}%\nVinix 7: {{ $json.metrics.breakdown.vinix }} mention, SoV {{ $json.metrics.share_of_voice.vinix }}%\n\nDATA PENCARIAN:\n{{ $json.text_for_ai }}\n\nBuat laporan dengan bagian berikut:\n\n1. **Perbandingan ketiga brand**\n   Bandingkan jumlah mentions dan SoV berdasarkan DATA METRICS. Pastikan total dan persentase sesuai dengan angka yang diberikan.\n\n2. **Sentimen dan reputasi**\n   Jelaskan sentimen hanya jika DATA PENCARIAN menyediakan bukti yang cukup. Jangan menyimpulkan sentimen hanya berdasarkan nama brand atau bidang bisnisnya.\n\n3. **Kelebihan dan kekurangan**\n   Sebutkan hanya hal yang didukung DATA PENCARIAN. Jika informasi tidak cukup untuk menentukan kelebihan atau kekurangan, jelaskan keterbatasannya.\n\n4. **Tiga rekomendasi strategi untuk NF Academy**\n   Berikan rekomendasi yang relevan berdasarkan data yang tersedia. Bedakan fakta dari saran.\n\nATURAN WAJIB:\n- Gunakan DATA METRICS sebagai sumber utama untuk semua angka mentions dan SoV.\n- Jangan mengganti angka 0 menjadi 10 atau mengarang angka lainnya.\n- Jangan membuat klaim bahwa suatu brand memiliki reputasi kuat, sentimen positif, atau keunggulan tertentu tanpa bukti dari DATA PENCARIAN.\n- Jangan menganggap jumlah hasil pencarian sama dengan jumlah mentions jika data tidak menjelaskan hal tersebut.\n- Jika DATA METRICS atau DATA PENCARIAN kosong, tidak lengkap, atau tidak sesuai, sebutkan masalahnya secara jelas.\n- Jangan mengarang fakta, nama program, pencapaian, atau informasi perusahaan yang tidak tersedia dalam data.\n- Jangan menyebut persaingan seimbang jika jumlah mentions atau SoV berbeda.\n- Gunakan bahasa Indonesia sederhana, susunan rapi, dan kesimpulan singkat.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        704,
+        80
+      ],
+      "id": "ecd27d64-4949-4a6f-9399-f44e89c43157",
+      "name": "Basic LLM Chain",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst analisisData = $('Basic LLM Chain').first().json;\n\nconst analisis =\n  analisisData.text ||\n  analisisData.response ||\n  analisisData.output ||\n  'Hasil analisis Gemini tidak ditemukan.';\n\nconst html = `\n<!DOCTYPE html>\n<html lang=\"id\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Monitoring Kompetitor NF Academy</title>\n</head>\n<body style=\"font-family: Arial, sans-serif; margin: 30px; color: #222;\">\n\n  <h1>Monitoring Kompetitor NF Academy</h1>\n  <p>Tanggal: ${new Date().toLocaleDateString('id-ID')}</p>\n\n  <hr>\n\n  <h2>Hasil Analisis Gemini</h2>\n  <div style=\"white-space: pre-wrap; line-height: 1.6;\">\n    ${String(analisis)\n      .replace(/&/g, '&amp;')\n      .replace(/</g, '&lt;')\n      .replace(/>/g, '&gt;')}\n  </div>\n\n</body>\n</html>\n`;\n\nreturn [{ json: { html } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1296,
+        80
+      ],
+      "id": "a524b995-57c6-44e3-901d-5366b7bfa892",
+      "name": "Generate HTML"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.pdfshift.io/v3/convert/pdf",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "source",
+              "value": "={{ $('Generate HTML').first().json.html }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1520,
+        80
+      ],
+      "id": "0c983f0e-c7a0-423b-bffe-af299e8522f9",
+      "name": "PDFShift",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "XdPs5jtiuZvvhZQI",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1DnBiurAcAb-3ux3j73fy8d4sqaow6ioLqZ2AknZl_H8",
+          "mode": "list",
+          "cachedResultName": "Monitoring Kompetitor NF Academy",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DnBiurAcAb-3ux3j73fy8d4sqaow6ioLqZ2AknZl_H8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 359460401,
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DnBiurAcAb-3ux3j73fy8d4sqaow6ioLqZ2AknZl_H8/edit#gid=359460401"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Tanggal": "={{ $now.toISO() }}",
+            "NF Acadeny": "={{ $('Menyiapkan Teks AI').first().json.metrics.breakdown.nfa }}",
+            "BISA AI": "={{ $('Menyiapkan Teks AI').first().json.metrics.breakdown.bisa }}",
+            "Vinix 7": "={{ $('Menyiapkan Teks AI').first().json.metrics.breakdown.vinix }}",
+            "Total Mention": "={{ $('Menyiapkan Teks AI').first().json.metrics.total_mentions }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Tanggal",
+              "displayName": "Tanggal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NF Acadeny",
+              "displayName": "NF Acadeny",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "BISA AI",
+              "displayName": "BISA AI",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Vinix 7",
+              "displayName": "Vinix 7",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Mention",
+              "displayName": "Total Mention",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1072,
+        80
+      ],
+      "id": "c70882f5-b777-4c49-b945-38b923614cbe",
+      "name": "Mencatat Hasil",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SMQsYNUGioIRdeDQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendDocument",
+        "chatId": "6198150300",
+        "binaryData": true,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1744,
+        80
+      ],
+      "id": "c69deaa3-9b3d-4eff-a994-6dd3d9376559",
+      "name": "Send a document",
+      "webhookId": "1fa76ebb-e623-40ad-989f-1bb40ecfe54a",
+      "credentials": {
+        "telegramApi": {
+          "id": "fK1O7sFACxtqsFd8",
+          "name": "Telegram account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "NFA",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "BISA AI",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "VINIX 7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VINIX 7": {
+      "main": [
+        [
+          {
+            "node": "gabungkan data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NFA": {
+      "main": [
+        [
+          {
+            "node": "gabungkan data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BISA AI": {
+      "main": [
+        [
+          {
+            "node": "gabungkan data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gabungkan data": {
+      "main": [
+        [
+          {
+            "node": "Menyiapkan Teks AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Menyiapkan Teks AI": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Mencatat Hasil",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate HTML": {
+      "main": [
+        [
+          {
+            "node": "PDFShift",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mencatat Hasil": {
+      "main": [
+        [
+          {
+            "node": "Generate HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDFShift": {
+      "main": [
+        [
+          {
+            "node": "Send a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6b250a90-bf62-4d80-99e6-83a6c55c85f3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dc96f10ae7dc95d3c138575ba243a0a167923dbcb524841d451aadf9135d5fb3"
+  },
+  "nodeGroups": [],
+  "id": "eTMq9HPzzl0dJTk8",
+  "tags": []
+}

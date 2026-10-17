@@ -1,0 +1,741 @@
+{
+  "name": "Tugas 7 - Pembuatan Konten Rutin",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -688,
+        -96
+      ],
+      "id": "7133c3a9-ea15-45ac-b628-cdbe04442a12",
+      "name": "Telegram Trigger",
+      "webhookId": "f20c1296-87c8-41db-ba4d-7af49f95abe4",
+      "credentials": {
+        "telegramApi": {
+          "id": "fK1O7sFACxtqsFd8",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/start",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "3e901341-d316-4c9b-845c-fb7d231bbb10"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f5987e2d-63c4-4def-ba3b-a8f4ea9f2404",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/start",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c38bc722-51fa-48d3-be21-20e30920726c",
+                    "leftValue": "={{ $json.message.caption }}",
+                    "rightValue": "video",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "video"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -400,
+        -112
+      ],
+      "id": "e45fb121-8f4a-4b1d-a5da-92c6354570aa",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Buatkan jadwal konten media sosial untuk hari ini berdasarkan tanggal {{ $now.format('yyyy-MM-dd') }}.\n\nBuat beberapa ide konten dan sertakan informasi:\n- time_slot: waktu publikasi\n- title: judul konten\n- platform: platform media sosial\n- focus: fokus atau tujuan konten\n\nGunakan bahasa Indonesia yang sederhana dan hasil yang jelas.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Kamu adalah asisten pembuat ide konten media sosial. Buat jadwal konten yang menarik, kreatif, dan mudah dibuat. Gunakan bahasa Indonesia yang sederhana. Pastikan setiap ide memiliki waktu publikasi, judul, platform, dan fokus konten."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        192,
+        -224
+      ],
+      "id": "77eabfc1-77c0-424a-b6ea-9ef726c05a4c",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        192,
+        -64
+      ],
+      "id": "10a07886-83b9-4e8a-a24f-b579eb2e6013",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "RaiKW7ruUAk4UoXe",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"time_slot\": \"09:00\",\n  \"title\": \"Tips belajar coding\",\n  \"platform\": \"Instagram\",\n  \"focus\": \"Edukasi\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        304,
+        -64
+      ],
+      "id": "54182e0e-f100-4ccf-92c4-7e74bac054be",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=📅 *Jadwal Konten Hari Ini*\n\n🕘 Waktu: {{ $json.output.time_slot }}\n📝 Judul: {{ $json.output.title }}\n📱 Platform: {{ $json.output.platform }}\n🎯 Fokus: {{ $json.output.focus }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        512,
+        -224
+      ],
+      "id": "9306da5e-f93d-4fe8-a74e-f1242b650473",
+      "name": "Send a text message",
+      "webhookId": "a913e90a-e168-401b-afbe-00e3fcfc53cf",
+      "credentials": {
+        "telegramApi": {
+          "id": "fK1O7sFACxtqsFd8",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3-pro-image",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3-pro-image (Nano Banana Pro)"
+        },
+        "prompt": "=Buat gambar konten media sosial yang menarik, modern, dan estetik berdasarkan ide berikut: {{ $('Telegram Trigger').item.json.message.text }}. Gunakan komposisi yang rapi, pencahayaan bagus, dan kualitas tinggi.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        128
+      ],
+      "id": "ca35fd34-41c4-4159-893e-be0be166d56b",
+      "name": "Generate an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "RaiKW7ruUAk4UoXe",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
+        "binaryData": true,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        576,
+        128
+      ],
+      "id": "92e9a6e1-d9fe-4f62-a453-f82a46087e3d",
+      "name": "Send a photo message",
+      "webhookId": "e973805d-73df-46f7-84e4-249534a4a0d0",
+      "credentials": {
+        "telegramApi": {
+          "id": "fK1O7sFACxtqsFd8",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://image.pollinations.ai/prompt/' + encodeURIComponent('Buat gambar yang unik, estetik, dan detail berdasarkan ide berikut: ' + $('Telegram Trigger').item.json.message.text) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        384,
+        128
+      ],
+      "id": "416a32c4-422c-41d7-b509-a1ea151cfe72",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "url": "https://api.kie.ai/api/v1/jobs/recordInfo?taskId=00289f5219bc95270fe026c6885e7ca3",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ec93a4e821a9fcb0e722af1ae846b94b"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        704,
+        -64
+      ],
+      "id": "ea28c12b-f793-44b1-8e2b-3de75e9222da",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "url": "={{ JSON.parse($json.data.resultJson).resultUrls[0] }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        864,
+        -48
+      ],
+      "id": "d7b0a00d-8ff5-4a53-bf1e-a6cd1fd98540",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "url": "https://api.telegram.org/bot8614820648:AAH6ESNgoO76E7Hgnhrta4Jhgi2fkZzcEHQ/getFile",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "file_id",
+              "value": "={{ $json.message.photo[$json.message.photo.length - 1].file_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -256,
+        288
+      ],
+      "id": "4b8a0ba5-b0ac-49a3-86bd-fa46df27bff3",
+      "name": "Ambil File Gambar Telegram"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/file/bot8614820648:AAH6ESNgoO76E7Hgnhrta4Jhgi2fkZzcEHQ/{{ $json.result.file_path }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        96,
+        304
+      ],
+      "id": "cd3f895e-f980-4f3f-b66c-0f4d871c3523",
+      "name": "Download Gambar Telegram"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.magichour.ai/v1/image-to-video",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"Video dari Telegram\",\n  \"end_seconds\": 5,\n  \"model\": \"ltx-2.5\",\n  \"resolution\": \"480p\",\n  \"assets\": {\n    \"image_file_path\": \"{{ $('Upload Gambar Magic Hour').first().json.items[0].file_path }}\"\n  },\n  \"style\": {\n    \"prompt\": \"Animate the uploaded image with smooth cinematic camera movement and natural motion. Preserve the original subject and visual style.\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        832,
+        384
+      ],
+      "id": "455655d8-172f-46e8-a6be-a3373db92b54",
+      "name": "Generate Video",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AsYVx2DqSUUkr69q",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.magichour.ai/v1/files/upload-urls",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer mhk_live_uCaoAxd3HSjjIT0k3cbwUjRicfnMJId6AmceI43nOVPJFebIEZABEK0W49egRMuReareO1uSVtpXwcew"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"items\": [\n    {\n      \"type\": \"image\",\n      \"extension\": \"jpg\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        256,
+        448
+      ],
+      "id": "249a3c8f-3b67-473f-a5e9-3e380ee72bde",
+      "name": "Upload Gambar Magic Hour",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AsYVx2DqSUUkr69q",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $('Upload Gambar Magic Hour').first().json.items[0].upload_url }}",
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        608,
+        368
+      ],
+      "id": "8e51d864-8236-49a4-bb02-f34dfd0827a7",
+      "name": "Kirim Gambar ke Magic Hour"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        416,
+        384
+      ],
+      "id": "1e49d6b5-f839-4d1b-8481-f70361618cc4",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.magichour.ai/v1/video-projects/{{ $('Generate Video').first().json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1088,
+        384
+      ],
+      "id": "f2c8dc28-cd84-4226-8600-9f654a8e4ab8",
+      "name": "Cek Status Video",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AsYVx2DqSUUkr69q",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://api.telegram.org/file/bot8614820648:AAH6ESNgoO76E7Hgnhrta4Jhgi2fkZzcEHQ/' + $('Ambil File Gambar Telegram').first().json.result.file_path }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1312,
+        384
+      ],
+      "id": "e46c73f2-e494-4103-8804-5e2c08b0b4da",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {
+        "operation": "sendVideo",
+        "chatId": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
+        "binaryData": true,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1536,
+        384
+      ],
+      "id": "ea1a01d6-f9b5-4820-ba78-d0983558aac2",
+      "name": "Send a video",
+      "webhookId": "9ee758dd-bf68-4136-97da-4cfd41715417",
+      "credentials": {
+        "telegramApi": {
+          "id": "fK1O7sFACxtqsFd8",
+          "name": "Telegram account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate an image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ambil File Gambar Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate an image": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Send a photo message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        []
+      ]
+    },
+    "Ambil File Gambar Telegram": {
+      "main": [
+        [
+          {
+            "node": "Download Gambar Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Gambar Telegram": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Upload Gambar Magic Hour",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Gambar Magic Hour": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Kirim Gambar ke Magic Hour": {
+      "main": [
+        [
+          {
+            "node": "Generate Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Kirim Gambar ke Magic Hour",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Video": {
+      "main": [
+        [
+          {
+            "node": "Cek Status Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cek Status Video": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Send a video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "eed490cb-d3f3-4426-9978-fd5b728c5415",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dc96f10ae7dc95d3c138575ba243a0a167923dbcb524841d451aadf9135d5fb3"
+  },
+  "nodeGroups": [],
+  "id": "UsKIgASRKG2Hy0Le",
+  "tags": []
+}
